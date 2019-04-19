@@ -1,0 +1,133 @@
+version: '3.3'
+
+services:
+  elasticsearch:
+    image: ronelcoe/elasticsearch:6.7.1
+    container_name: elastic_6.7.1
+    build:
+      context: elasticsearch
+      dockerfile: Dockerfile
+    environment:
+      - cluster.name=apm-java
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms256m -Xmx256m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - 9200:9200
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:6.7.1
+    container_name: kibana_6.7.1
+    environment:
+      - "LOGGING_QUIET=true"
+    depends_on:
+      - elasticsearch
+    ports:
+      - 5601:5601 
+    links:
+      - elasticsearch
+
+  metricbeat:
+    image: ronelcoe/metricbeat:6.7.1
+    container_name: metricbeat_6.7.1
+    build:
+      context: metricbeat
+      dockerfile: Dockerfile
+
+  logstash:
+    image: ronelcoe/logstash:6.7.1
+    container_name: logstash_6.7.1
+    build:
+      context: logstash
+      dockerfile: Dockerfile
+    depends_on:
+      - elasticsearch
+    links:
+      - elasticsearch
+
+  filebeat:
+    image: ronelcoe/filebeat:6.7.1
+    container_name: filebeat_6.7.1
+    build:
+      context: filebeat
+      dockerfile: Dockerfile
+    links:
+      - logstash
+    volumes:
+      - app_logs:/opt/app/logs
+
+  mysql:
+    image: mysql:8.0.13
+    container_name: mysql_8.0.13
+    command: --default-authentication-plugin=mysql_native_password
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql_54321
+      MYSQL_DATABASE: users
+      MYSQL_USER: app
+      MYSQL_PASSWORD: mysql_12345
+
+  apm:
+    image: ronelcoe/apm-server:6.6.2
+    container_name: apm-server_6.6.2
+    build:
+      context: apm-server
+      dockerfile: Dockerfile
+    ports:
+      - 8200:8200
+    links:
+      - elasticsearch
+
+  app1-microservice:
+    image: ronelcoe/springboot-app1:1.0.1
+    container_name: springboot-app1
+    build:
+      context: ./
+      dockerfile: apm-app-template/Dockerfile
+      args:
+        - "JAR_PATH=apm-app-template/apm1-1.0.1-SNAPSHOT.jar"
+    environment:
+      - "EXPOSE_PORT=8081"
+      - "JAR_NAME=apm1-1.0.1-SNAPSHOT.jar"
+      - "JVM_OPTIONS="
+      - "ELASTIC_APM_SERVICE_NAME=springboot-app1"
+      - "ELASTIC_APM_APPLICATION_PACKAGES=com.bnp.apm1"
+      - "ELASTIC_APM_SERVER_URLS=http://apm:8200"
+    ports:
+      - 8081:8081
+    links:
+      - apm
+      - app2-microservice
+    volumes:
+      - app_logs:/opt/app/logs
+
+  app2-microservice:
+    image: ronelcoe/springboot-app2:1.0.1
+    container_name: springboot-app2
+    build:
+      context: ./
+      dockerfile: apm-app-template/Dockerfile
+      args:
+        - "JAR_PATH=apm-app-template/apm2-1.0.1-SNAPSHOT.jar"
+    environment:
+      - "EXPOSE_PORT=8082"
+      - "JAR_NAME=apm2-1.0.1-SNAPSHOT.jar"
+      - "JVM_OPTIONS="
+      - "ELASTIC_APM_SERVICE_NAME=springboot-app2"
+      - "ELASTIC_APM_APPLICATION_PACKAGES=com.bnp.apm2"
+      - "ELASTIC_APM_SERVER_URLS=http://apm:8200"
+    ports:
+      - 8082:8082
+    links:
+      - apm
+      - mysql
+    volumes:
+      - app_logs:/opt/app/logs
+
+volumes:
+  app_logs:
+    driver: local 
