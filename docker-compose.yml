@@ -3,10 +3,13 @@ version: '3.3'
 services:
   elasticsearch:
     image: ronelcoe/elasticsearch:6.7.1
-    container_name: elastic_6.7.1
+    #container_name: elastic_6.7.1
     build:
       context: elasticsearch
       dockerfile: Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
     environment:
       - cluster.name=apm-java
       - bootstrap.memory_lock=true
@@ -20,7 +23,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:6.7.1
-    container_name: kibana_6.7.1
+    #container_name: kibana_6.7.1
     environment:
       - "LOGGING_QUIET=true"
     depends_on:
@@ -32,7 +35,7 @@ services:
 
   metricbeat:
     image: ronelcoe/metricbeat:6.7.1
-    container_name: metricbeat_6.7.1
+    #container_name: metricbeat_6.7.1
     build:
       context: metricbeat
       dockerfile: Dockerfile
@@ -40,7 +43,7 @@ services:
 
   logstash:
     image: ronelcoe/logstash:6.7.1
-    container_name: logstash_6.7.1
+    #container_name: logstash_6.7.1
     build:
       context: logstash
       dockerfile: Dockerfile
@@ -51,7 +54,7 @@ services:
 
   filebeat:
     image: ronelcoe/filebeat:6.7.1
-    container_name: filebeat_6.7.1
+    #container_name: filebeat_6.7.1
     build:
       context: filebeat
       dockerfile: Dockerfile
@@ -62,7 +65,7 @@ services:
 
   mysql:
     image: mysql:8.0.13
-    container_name: mysql_8.0.13
+    #container_name: mysql_8.0.13
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - 3306:3306
@@ -74,18 +77,20 @@ services:
 
   apm:
     image: ronelcoe/apm-server:6.6.2
-    container_name: apm-server_6.6.2
+    #container_name: apm-server_6.6.2
     build:
       context: apm-server
       dockerfile: Dockerfile
     ports:
       - 8200:8200
+    depends_on:
+      - elasticsearch
     links:
       - elasticsearch
 
   app1-microservice:
     image: ronelcoe/springboot-app1:1.0.1
-    container_name: springboot-app1
+    #container_name: springboot-app1
     build:
       context: ./
       dockerfile: apm-app-template/Dockerfile
@@ -108,7 +113,7 @@ services:
 
   app2-microservice:
     image: ronelcoe/springboot-app2:1.0.1
-    container_name: springboot-app2
+    #container_name: springboot-app2
     build:
       context: ./
       dockerfile: apm-app-template/Dockerfile
