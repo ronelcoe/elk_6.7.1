@@ -43,20 +43,23 @@ metricbeat.modules:
     # Configure the metric types that are included by these metricsets.
     cpu.metrics:  ["percentages"]  # The other available options are normalized_percentages and ticks.
     core.metrics: ["percentages"]  # The other available option is ticks.
-#  - module: docker
-#    metricsets:
-#      - "container"
-#      - "cpu"
-#      - "diskio"
-#      - "event"
-#      - "healthcheck"
-#      - "info"
+  - module: docker
+    metricsets:
+      - "container"
+      - "cpu"
+      - "diskio"
+      - "event"
+      - "healthcheck"
+      - "info"
       #- "image"
-#      - "memory"
-#      - "network"
-#    hosts: ["npipe://./pipe/docker_engine"]
-#    period: 10s
-#    enabled: true
+      - "memory"
+      - "network"
+    #hosts: ["tcp://10.0.75.1:2375"]
+    hosts: ["tcp://docker.for.win.localhost:2375"]
+    #hosts: ["npipe:////./pipe/docker_engine"]
+    #hosts: ["unix:///var/run/docker.sock"]
+    period: 10s
+    enabled: true
 
 #==================== Elasticsearch template setting ==========================
 
@@ -104,6 +107,7 @@ setup.kibana:
   # In case you specify and additional path, the scheme is required: http://localhost:5601/path
   # IPv6 addresses should always be defined as: https://[2001:db8::1]:5601
   host: "kibana:5601"
+  #host: "localhost:5601"
 
   # Kibana Space ID
   # ID of the Kibana Space into which the dashboards should be loaded. By default,
@@ -131,6 +135,7 @@ setup.kibana:
 output.elasticsearch:
   # Array of hosts to connect to.
   hosts: ["elasticsearch:9200"]
+  #hosts: ["localhost:9200"]
 
   # Optional protocol and basic auth credentials.
   #protocol: "https"
