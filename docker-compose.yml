@@ -3,7 +3,7 @@ version: '3.3'
 services:
   elasticsearch:
     image: ronelcoe/elasticsearch:6.7.1
-    #container_name: elastic_6.7.1
+    container_name: elastic_6.7.1
     build:
       context: elasticsearch
       dockerfile: Dockerfile
@@ -23,7 +23,7 @@ services:
 
   kibana:
     image: docker.elastic.co/kibana/kibana:6.7.1
-    #container_name: kibana_6.7.1
+    container_name: kibana_6.7.1
     environment:
       - "LOGGING_QUIET=true"
     depends_on:
@@ -35,15 +35,14 @@ services:
 
   metricbeat:
     image: ronelcoe/metricbeat:6.7.1
-    #container_name: metricbeat_6.7.1
+    container_name: metricbeat_6.7.1
     build:
       context: metricbeat
       dockerfile: Dockerfile
-    #network_mode: host
 
   logstash:
     image: ronelcoe/logstash:6.7.1
-    #container_name: logstash_6.7.1
+    container_name: logstash_6.7.1
     build:
       context: logstash
       dockerfile: Dockerfile
@@ -54,7 +53,7 @@ services:
 
   filebeat:
     image: ronelcoe/filebeat:6.7.1
-    #container_name: filebeat_6.7.1
+    container_name: filebeat_6.7.1
     build:
       context: filebeat
       dockerfile: Dockerfile
@@ -65,7 +64,7 @@ services:
 
   mysql:
     image: mysql:8.0.13
-    #container_name: mysql_8.0.13
+    container_name: mysql_8.0.13
     command: --default-authentication-plugin=mysql_native_password
     ports:
       - 3306:3306
@@ -77,7 +76,7 @@ services:
 
   apm:
     image: ronelcoe/apm-server:6.6.2
-    #container_name: apm-server_6.6.2
+    container_name: apm-server_6.6.2
     build:
       context: apm-server
       dockerfile: Dockerfile
@@ -88,9 +87,23 @@ services:
     links:
       - elasticsearch
 
+  zipkin:
+    image: ronelcoe/zipkin-ui
+    container_name: zipkin_ui
+    build:
+      context: zipkin
+      dockerfile: Dockerfile
+    ports:
+      - 9411:9411
+    #environment:
+    #  - "DSTORAGE_TYPE=elasticsearch" 
+    #  - "DES_HOSTS=http://elasticsearch:9200"
+    depends_on:
+      - elasticsearch
+
   app1-microservice:
     image: ronelcoe/springboot-app1:1.0.1
-    #container_name: springboot-app1
+    container_name: springboot-app1
     build:
       context: ./
       dockerfile: apm-app-template/Dockerfile
@@ -103,6 +116,8 @@ services:
       - "ELASTIC_APM_SERVICE_NAME=springboot-app1"
       - "ELASTIC_APM_APPLICATION_PACKAGES=com.bnp.apm1"
       - "ELASTIC_APM_SERVER_URLS=http://apm:8200"
+      #- "ELASTIC_APM_TRACE-METHODS=com.bnp.apm1.*"
+      #- "ELASTIC_APM_DISABLE_INSTRUMENTATIONS=annotations, apache-httpclient, concurrent, dispatcher-servlet, elasticsearch-restclient, executor, http-client, incubating, jax-rs, jax-ws, jdbc, jsf, okhttp, opentracing, public-api, render, scheduled, servlet-api, servlet-api-async, servlet-input-stream, servlet-service-name, spring-mvc, spring-resttemplate, spring-service-name, urlconnection"
     ports:
       - 8081:8081
     links:
@@ -113,7 +128,7 @@ services:
 
   app2-microservice:
     image: ronelcoe/springboot-app2:1.0.1
-    #container_name: springboot-app2
+    container_name: springboot-app2
     build:
       context: ./
       dockerfile: apm-app-template/Dockerfile
@@ -126,6 +141,8 @@ services:
       - "ELASTIC_APM_SERVICE_NAME=springboot-app2"
       - "ELASTIC_APM_APPLICATION_PACKAGES=com.bnp.apm2"
       - "ELASTIC_APM_SERVER_URLS=http://apm:8200"
+      #- "ELASTIC_APM_TRACE-METHODS=com.bnp.apm2.*"
+      #- "ELASTIC_APM_DISABLE_INSTRUMENTATIONS=annotations, apache-httpclient, concurrent, dispatcher-servlet, elasticsearch-restclient, executor, http-client, incubating, jax-rs, jax-ws, jdbc, jsf, okhttp, opentracing, public-api, render, scheduled, servlet-api, servlet-api-async, servlet-input-stream, servlet-service-name, spring-mvc, spring-resttemplate, spring-service-name, urlconnection"
     ports:
       - 8082:8082
     links:
